@@ -232,18 +232,13 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        # KernelSU-Next (next) always uses the latest susfs4ksu gki branch tip so
-        # SUSFS stays API-matched to the always-latest KernelSU-Next tree. All
-        # other roots (kernelsu, resukisu, sukisu-ultra) use the pinned
-        # verified SUSFS commit.
-        if [ "${{ inputs.root_flavor }}" = "next" ]; then
-          BRANCH="gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}"
-          SUSFS_COMMIT="$(git ls-remote https://gitlab.com/simonpunk/susfs4ksu.git "refs/heads/${BRANCH}" | cut -f1)"
-          echo "KernelSU-Next: resolving SUSFS at latest on ${BRANCH} -> ${SUSFS_COMMIT}"
-        else
-          SUSFS_COMMIT="${{ inputs.susfs_commit }}"
-          echo "Using pinned SUSFS commit: ${SUSFS_COMMIT}"
+        # K90 Phase 1: all build inputs are immutable. Do not chase branch tips.
+        SUSFS_COMMIT="${{ inputs.susfs_commit }}"
+        if ! [[ "$SUSFS_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+          echo "Invalid pinned SUSFS commit: $SUSFS_COMMIT" >&2
+          exit 1
         fi
+        echo "Using pinned SUSFS commit: ${SUSFS_COMMIT}"
         echo "commit=${SUSFS_COMMIT}" >> "$GITHUB_OUTPUT"
 
     - name: SUSFS
@@ -352,6 +347,7 @@ jobs:
         kernel_version: ${{ inputs.kernel_version }}
 
     - name: Setup Misc Configs
+      if: false  # K90 Phase 1 minimal: exclude unrelated upstream extras
       uses: ./.github/actions/misc
 
     - name: Enable BPF Stack (BTF + eBPF + FUSE-BPF)
@@ -363,6 +359,7 @@ jobs:
         sublevel: ${{ steps.extract.outputs.sublevel }}
 
     - name: Apply Device-Specific Patches
+      if: false  # K90 Phase 1 minimal: exclude unrelated upstream extras
       uses: ./.github/actions/apply-device-patches
       with:
         version: ${{ inputs.version }}
@@ -396,6 +393,7 @@ jobs:
         fi
 
     - name: Apply Kernel Branding
+      if: false  # K90 Phase 1 minimal: exclude unrelated upstream extras
       uses: ./.github/actions/apply-kernel-branding
       with:
         variant: ${{ inputs.variant }}

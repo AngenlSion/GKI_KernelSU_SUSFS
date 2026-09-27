@@ -54,7 +54,7 @@ runs:
         # no-features core build + Toolkit coexistence fixes) only apply to
         # KernelSU-Next (dev-susfs fork). Other flavors use the simonpunk
         # checkout as-is.
-        if [ "${{ inputs.root_flavor }}" = "next" ]; then
+        if [ "${{ inputs.root_flavor }}" = "next" ] && [ "${{ inputs.version }}" = "android14-6.1" ]; then
           git fetch https://gitlab.com/pershoot/susfs4ksu.git gki-android14-6.1-dev || true
           git log ..FETCH_HEAD --oneline -n 2 | awk '{print $1}' | tac | xargs git cherry-pick 2>/dev/null || true
         fi
